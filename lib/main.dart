@@ -8,7 +8,6 @@ void main() {
 }
 
 class MyApp extends StatefulWidget {
-
   const MyApp({Key? key}) : super(key: key);
 
   @override
@@ -33,10 +32,9 @@ class TestPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton.small(onPressed: (){
+      floatingActionButton: FloatingActionButton.small(onPressed: () {
         Get.snackbar("ERROR", "WOII");
       }),
     );
   }
 }
-
