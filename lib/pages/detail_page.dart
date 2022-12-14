@@ -1,12 +1,20 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:screenshot/screenshot.dart';
 import 'package:submission_mydigilearn/controller/detail_controller.dart';
+import 'package:submission_mydigilearn/pages/preview_page.dart';
 
 import '../widgets/custom_button.dart';
+
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 
 class DetailPage extends StatefulWidget {
   const DetailPage({Key? key}) : super(key: key);
@@ -20,7 +28,10 @@ class _DetailPageState extends State<DetailPage> {
 
   final ImagePicker _picker = ImagePicker();
 
+  String? _imageUri;
   File? _imageFile;
+  File? _imageResult;
+  Uint8List? _imgMemory;
   String? imgBase64;
 
   Future pickImage(String type) async {
@@ -56,6 +67,20 @@ class _DetailPageState extends State<DetailPage> {
     }
   }
 
+  Future<void> takeScreenshot() async {
+    final controller = ScreenshotController();
+    final bytes = await controller.captureFromWidget(Material(
+      child: buildCanvas(),
+    ));
+    setState(() => _imgMemory = bytes);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() => _imageUri = Get.arguments.toString());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,14 +91,6 @@ class _DetailPageState extends State<DetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(
-              height: 200,
-              width: double.infinity,
-              child: Image.network(
-                Get.arguments.toString(),
-                fit: BoxFit.contain,
-              ),
-            ),
             const SizedBox(height: 16),
             FittedBox(
               child: Container(
@@ -129,48 +146,59 @@ class _DetailPageState extends State<DetailPage> {
               ),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              height: 200,
-              width: double.infinity,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Image.network(
-                    Get.arguments.toString(),
-                    fit: BoxFit.contain,
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: 50,
-                        height: 50,
-                        child: _imageFile == null
-                            ? Container()
-                            : Image.file(
-                                _imageFile!,
-                                fit: BoxFit.cover,
-                              ),
-                      ),
-                      Obx(
-                        () => Text(
-                          detailC.watermark.value,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                ],
-              ),
-            ),
+            buildCanvas(),
             const SizedBox(height: 16),
+            CustomButton(
+              title: "NEXT",
+              onPress: () async {
+                await takeScreenshot();
+                Get.to(() => const PreviewPage(), arguments: _imgMemory);
+              },
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget buildCanvas() {
+    return SizedBox(
+      height: 200,
+      width: double.infinity,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Image.network(
+            _imageUri!,
+            fit: BoxFit.contain,
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 50,
+                height: 50,
+                child: _imageFile == null
+                    ? Container()
+                    : Image.file(
+                        _imageFile!,
+                        fit: BoxFit.cover,
+                      ),
+              ),
+              Obx(
+                () => Text(
+                  detailC.watermark.value,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+            ],
+          )
+        ],
       ),
     );
   }
