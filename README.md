@@ -1,4 +1,4 @@
-# submission_mydigilearn
+# submission_algo
 
 A new Flutter project.
 
